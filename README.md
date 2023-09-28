@@ -44,3 +44,20 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel>() {
     }
 })
 ```
+## Methods:
+
+```kotlin
+    animateTo(newItems) //Display new list changes with animation
+
+    insertItems(newItems)
+
+    insertIgnoreItems(items)
+
+    clearItems()
+
+    insertItem(item)
+
+    removeItem(position)
+
+    moveItem(fromPosition,toPosition)
+```

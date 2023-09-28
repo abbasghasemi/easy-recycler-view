@@ -4,7 +4,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.ag.recyclerview.easyadapter.ItemAdapter.ViewBinding
 import java.lang.reflect.InvocationTargetException
+
 
 /**
  * @author Abbas Ghasemi
@@ -17,16 +19,16 @@ open class ItemAdapter<V, M>(
 ) : RecyclerView.Adapter<ItemAdapter<V, M>.ViewHolder>() {
 
     /**
-     * @param viewBinding Is a view controller
+     * @param viewBinding Is a view controller.
      * @see ViewBinding
      */
     constructor(viewBinding: ViewBinding<V, M>) : this(ArrayList<M>(), viewBinding)
 
     /**
-     * Adds and displays new items to the list
-     * @param items A list of items
+     * Adds new items to the display list.
+     * @param items A list of items.
      */
-    fun insertItems(items: List<M>) {
+    open fun insertItems(items: List<M>) {
         val size = this.items.size
         this.items.addAll(items)
         notifyItemRangeInserted(size, items.size)
@@ -34,13 +36,13 @@ open class ItemAdapter<V, M>(
 
     /**
      * This method is called when your new items contains the current [items] values.
-     * First, the items is emptied and then a new items is added and displayed.
+     * First, items will be cleared and then newly added items will be displayed
      * The size of the new items cannot be smaller than the current items size.
      * If the previous values of the items have changed, it is ignored!.
      * It should not be used when the type of past values has been changed.
      * @param items A list of items
      */
-    fun insertIgnoreItems(items: List<M>) {
+    open fun insertIgnoreItems(items: List<M>) {
         val size = this.items.size
         if (size > items.size) {
             throw RuntimeException("insertIgnoreItems: The size of the new items cannot be smaller than the current items size.")
@@ -48,6 +50,97 @@ open class ItemAdapter<V, M>(
         this.items.clear()
         this.items.addAll(items)
         notifyItemRangeInserted(size, items.size)
+    }
+
+    /**
+     * Clear all [items].
+     */
+    open fun clearItems() {
+        val size: Int = items.size
+        if (size == 0) return
+        items.clear()
+        notifyItemRangeRemoved(0, size)
+    }
+
+    /**
+     * All changes of [newItems] compared to [items] are displayed by animation.
+     * This method automatically removes the items that aren't in the new items and displays the new items.
+     * Also, if the position of the items is changed, it will move to the new position.
+     */
+    open fun animateTo(newItems: List<M>) {
+        try {
+            applyAndAnimateRemovals(newItems)
+            applyAndAnimateAdditions(newItems)
+            applyAndAnimateMovedItems(newItems)
+        } catch (e: Exception) {
+            //
+        }
+    }
+
+    /**
+     * Added new [item].
+     */
+    open fun insertItem(position: Int = items.size, item: M) {
+        items.add(position, item)
+        notifyItemInserted(position)
+    }
+
+    /**
+     * Remove item by [position].
+     */
+    open fun removeItem(position: Int) {
+        items.removeAt(position)
+        notifyItemRemoved(position)
+    }
+
+    /**
+     * Move item [fromPosition] - [toPosition].
+     */
+    open fun moveItem(fromPosition: Int, toPosition: Int) {
+        val model = items.removeAt(fromPosition)
+        items.add(toPosition, model)
+        notifyItemMoved(fromPosition, toPosition)
+    }
+
+
+    /**
+     * Search to remove items that are not in the new items.
+     */
+    private fun applyAndAnimateRemovals(newItems: List<M>) {
+        for (i in items.size - 1 downTo 0) {
+            val model = items[i]
+            if (!newItems.contains(model)) {
+                removeItem(i)
+            }
+        }
+    }
+
+    /**
+     * Search to add items that are not in the current items.
+     */
+    private fun applyAndAnimateAdditions(newModels: List<M>) {
+        var i = 0
+        val count = newModels.size
+        while (i < count) {
+            val model = newModels[i]
+            if (!items.contains(model)) {
+                insertItem(i, model)
+            }
+            i++
+        }
+    }
+
+    /**
+     * Search to change the position of items whose position has changed.
+     */
+    private fun applyAndAnimateMovedItems(newModels: List<M>) {
+        for (toPosition in newModels.size - 1 downTo 0) {
+            val model = newModels[toPosition]
+            val fromPosition: Int = items.indexOf(model)
+            if (fromPosition >= 0 && fromPosition != toPosition) {
+                moveItem(fromPosition, toPosition)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
