@@ -3,9 +3,11 @@ package com.ag.recyclerview.easyadapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.ag.recyclerview.easyadapter.ItemAdapter.ViewBinding
 import java.lang.reflect.InvocationTargetException
+import java.util.Collections
 
 
 /**
@@ -15,7 +17,7 @@ import java.lang.reflect.InvocationTargetException
  * @see ViewBinding
  */
 open class ItemAdapter<V, M>(
-    val items: MutableList<M>, val viewBinding: ViewBinding<V, M>
+    private var items: MutableList<M>, val viewBinding: ViewBinding<V, M>
 ) : RecyclerView.Adapter<ItemAdapter<V, M>.ViewHolder>() {
 
     /**
@@ -23,6 +25,11 @@ open class ItemAdapter<V, M>(
      * @see ViewBinding
      */
     constructor(viewBinding: ViewBinding<V, M>) : this(ArrayList<M>(), viewBinding)
+
+    /**
+     * @return [items]
+     */
+    open fun getItems(): MutableList<M> = items
 
     /**
      * Adds new items to the display list.
@@ -42,13 +49,15 @@ open class ItemAdapter<V, M>(
      * It should not be used when the type of past values has been changed.
      * @param items A list of items
      */
-    open fun insertIgnoreItems(items: List<M>) {
+    open fun insertIgnoreItems(items: MutableList<M>) {
         val size = this.items.size
+        if (size == items.size) return
         if (size > items.size) {
             throw RuntimeException("insertIgnoreItems: The size of the new items cannot be smaller than the current items size.")
         }
-        this.items.clear()
-        this.items.addAll(items)
+//        this.items.clear()
+//        this.items.addAll(items)
+        this.items = items;
         notifyItemRangeInserted(size, items.size)
     }
 
@@ -60,6 +69,15 @@ open class ItemAdapter<V, M>(
         if (size == 0) return
         items.clear()
         notifyItemRangeRemoved(0, size)
+    }
+
+    /**
+     * @see clearItems
+     * @see insertIgnoreItems
+     */
+    open fun clearAndInsertItems(items: MutableList<M>) {
+        clearItems()
+        insertIgnoreItems(items)
     }
 
     /**
@@ -80,7 +98,12 @@ open class ItemAdapter<V, M>(
     /**
      * Added new [item].
      */
-    open fun insertItem(position: Int = items.size, item: M) {
+    open fun insertItem(item: M) = insertItem(items.size, item)
+
+    /**
+     * Added new [item] the list at the specified [position].
+     */
+    open fun insertItem(position: Int, item: M) {
         items.add(position, item)
         notifyItemInserted(position)
     }
@@ -94,12 +117,34 @@ open class ItemAdapter<V, M>(
     }
 
     /**
-     * Move item [fromPosition] - [toPosition].
+     * Remove item by item.
+     * @return True if item removed.
+     */
+    open fun removeItem(item: M): Boolean {
+        val index = items.indexOf(item)
+        if (index == -1) {
+            return false
+        }
+        removeItem(index)
+        return true
+    }
+
+    /**
+     * Move item [fromPosition] -> [toPosition].
      */
     open fun moveItem(fromPosition: Int, toPosition: Int) {
         val model = items.removeAt(fromPosition)
         items.add(toPosition, model)
         notifyItemMoved(fromPosition, toPosition)
+    }
+
+    /**
+     * Swap item [fromPosition] <-> [toPosition].
+     */
+    open fun swapItem(fromPosition: Int, toPosition: Int) {
+        Collections.swap(items, fromPosition, toPosition)
+        notifyItemChanged(fromPosition)
+        notifyItemChanged(toPosition)
     }
 
 
@@ -265,5 +310,102 @@ open class ItemAdapter<V, M>(
         open fun bind(view: V, item: M, position: Int, viewType: Int): Boolean {
             return false
         }
+    }
+
+    /**
+     * Specifies whether long press drag is active or inactive.
+     */
+    open var longPressDragEnabled: Boolean? = null
+        set(value) {
+            field = value!!
+        }
+
+    /**
+     * The user can move items from one position to another by long touching them.
+     * @param recyclerView
+     * @param dragListener
+     * @see LongPressDragListener
+     */
+    open fun enableLongPressDrag(
+        recyclerView: RecyclerView,
+        dragListener: LongPressDragListener
+    ) {
+        longPressDragEnabled = true
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
+
+            private var startPosition = -1
+            private var endPosition = -1
+
+            override fun isItemViewSwipeEnabled(): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            override fun isLongPressDragEnabled(): Boolean {
+                return this@ItemAdapter.longPressDragEnabled!!
+            }
+
+            override fun getMovementFlags(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                return if (!dragListener.canDrag(viewHolder.layoutPosition)) {
+                    0
+                } else makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+            }
+
+            override fun onMove(
+                recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                if (!dragListener.canDrag(target.layoutPosition)) {
+                    return false
+                }
+                if (startPosition == -1) {
+                    startPosition = viewHolder.layoutPosition
+                }
+                endPosition = target.layoutPosition
+                moveItem(viewHolder.layoutPosition, endPosition)
+                return true
+            }
+
+            override fun clearView(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ) {
+                super.clearView(recyclerView, viewHolder)
+                if (startPosition != endPosition) {
+                    dragListener.moved(startPosition, endPosition)
+                } else if (startPosition == -1){
+                    dragListener.cancelled()
+                }
+                endPosition = -1
+                startPosition = -1
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    interface LongPressDragListener {
+
+        /**
+         * Specifies the item aligned with [position] to drag.
+         * @return true if you want to drag otherwise false.
+         */
+        fun canDrag(position: Int): Boolean
+
+        /**
+         * When the item is dropped and its position changes.
+         * @param startPosition past position
+         * @param endPosition new position
+         */
+        fun moved(startPosition: Int, endPosition: Int)
+
+        /**
+         * Called when no movement has occurred.
+         */
+        fun cancelled()
+
     }
 }

@@ -49,15 +49,21 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel>() {
 ```kotlin
     animateTo(newItems) //Display new list changes with animation
 
+    enableLongPressDrag(recyclerView,longPressDragListener) //The user can move items from one position to another
+
     insertItems(newItems)
 
     insertIgnoreItems(items)
 
     clearItems()
+    
+    clearAndInsertItems(newItems)
 
     insertItem(item)
 
     removeItem(position)
 
     moveItem(fromPosition,toPosition)
+    
+    swapItem(fromPosition,toPosition)
 ```

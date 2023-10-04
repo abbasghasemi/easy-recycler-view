@@ -54,7 +54,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId =  "com.github.abbasghasemi"
             artifactId = "easy-adapter"
-            version = "1.0.0"
+            version = "1.1.0"
 
             pom {
                 name.set("Easy RecyclerView Adapter")
