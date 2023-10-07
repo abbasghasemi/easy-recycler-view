@@ -4,13 +4,13 @@
 There is a [sample](https://github.com/abbasghasemi/easy-recyclerview-adapter/tree/master/sample) module.
 ## Single view type
 ```kotlin
-ItemAdapter(items, object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel>() {
-    override fun create(parent: ViewGroup, inflater: LayoutInflater, viewType: Int): ItemAdapter.Binding<ItemRecycler1Binding> {
+ItemAdapter(items, object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel> {
+    override fun createItem(parent: ViewGroup, inflater: LayoutInflater, itemType: Int): ItemAdapter.Binding<ItemRecycler1Binding> {
         val item = ItemRecycler1Binding.inflate(inflater, parent, false)
         return ItemAdapter.Binding(item.root, item)
     }
 
-    override fun bind(view: ItemRecycler1Binding, item: DataModel, position: Int, viewType: Int): Boolean {
+    override fun bindItem(view: ItemRecycler1Binding, item: DataModel, position: Int, itemType: Int): Boolean {
         view.sample1.text = item.data
         return true
     }
@@ -18,13 +18,13 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataMo
 ```
 ## Custom view type:
 ```kotlin
-ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel>() {
-    override fun type(position: Int): Int {
+ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel> {
+    override fun itemType(position: Int): Int {
         return position
     }
 
-    override fun create(parent: ViewGroup, inflater: LayoutInflater, viewType: Int): ItemAdapter.Binding<Any> {
-        return if (viewType == 0) {
+    override fun createItem(parent: ViewGroup, inflater: LayoutInflater, itemType: Int): ItemAdapter.Binding<Any> {
+        return if (itemType == 0) {
             val item = ItemRecycler1Binding.inflate(inflater, parent, false)
             ItemAdapter.Binding(item.root, item)
         } else {
@@ -34,12 +34,12 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel>() {
     }
     
     @Keep
-    fun bind(view: ItemRecycler1Binding, item: DataModel, position: Int) {
+    fun bindItem(view: ItemRecycler1Binding, item: DataModel, position: Int) {
         view.sample1.text = item.data
     }
 
     @Keep
-    fun bind(view: ItemRecycler2Binding, item: DataModel, position: Int) {
+    fun bindItem(view: ItemRecycler2Binding, item: DataModel, position: Int) {
         view.sample2.text = item.data
     }
 })

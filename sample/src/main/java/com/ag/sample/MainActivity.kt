@@ -31,22 +31,22 @@ class MainActivity : AppCompatActivity() {
     private fun defaultAdapter(): ItemAdapter<ItemRecycler1Binding, DataModel> {
         return ItemAdapter(
             items,
-            object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel>() {
+            object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel> {
 
-                override fun create(
+                override fun createItem(
                     parent: ViewGroup,
                     inflater: LayoutInflater,
-                    viewType: Int
+                    itemType: Int
                 ): ItemAdapter.Binding<ItemRecycler1Binding> {
                     val item = ItemRecycler1Binding.inflate(inflater, parent, false)
                     return ItemAdapter.Binding(item.root, item)
                 }
 
-                override fun bind(
+                override fun bindItem(
                     view: ItemRecycler1Binding,
                     item: DataModel,
                     position: Int,
-                    viewType: Int
+                    itemType: Int
                 ): Boolean {
                     view.sample1.text = item.data
                     return true
@@ -56,18 +56,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun customAdapter(): ItemAdapter<Any, DataModel> {
-        return ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel>() {
+        return ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel> {
 
-            override fun type(position: Int): Int {
+            override fun itemType(position: Int): Int {
                 return position
             }
 
-            override fun create(
+            override fun createItem(
                 parent: ViewGroup,
                 inflater: LayoutInflater,
-                viewType: Int
+                itemType: Int
             ): ItemAdapter.Binding<Any> {
-                return if (viewType == 0) {
+                return if (itemType == 0) {
                     val item = ItemRecycler1Binding.inflate(inflater, parent, false)
                     ItemAdapter.Binding(item.root, item)
                 } else {
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             @Keep
-            fun bind(
+            fun bindItem(
                 view: ItemRecycler1Binding,
                 item: DataModel,
                 position: Int
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             @Keep
-            fun bind(
+            fun bindItem(
                 view: ItemRecycler2Binding,
                 item: DataModel,
                 position: Int

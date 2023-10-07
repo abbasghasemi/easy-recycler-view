@@ -189,7 +189,7 @@ open class ItemAdapter<V, M>(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(viewBinding.create(parent, LayoutInflater.from(parent.context), viewType))
+        return ViewHolder(viewBinding.createItem(parent, LayoutInflater.from(parent.context), viewType))
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
@@ -197,7 +197,7 @@ open class ItemAdapter<V, M>(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return viewBinding.type(position)
+        return viewBinding.itemType(position)
     }
 
     override fun getItemCount(): Int {
@@ -214,10 +214,10 @@ open class ItemAdapter<V, M>(
          */
         fun bind() {
             val item = items[layoutPosition]
-            if (!viewBinding.bind(binding.view, item, layoutPosition, itemViewType)) {
+            if (!viewBinding.bindItem(binding.view, item, layoutPosition, itemViewType)) {
                 try {
                     val method = viewBinding.javaClass.getMethod(
-                        "bind",
+                        "bindItem",
                         binding.view!!::class.java,
                         item!!::class.java,
                         Int::class.javaPrimitiveType
@@ -240,20 +240,20 @@ open class ItemAdapter<V, M>(
      */
     data class Binding<V>(val itemView: View, val view: V)
 
-    abstract class ViewBinding<V, M> {
+    interface ViewBinding<V, M> {
         /**
-         * Return the view type of the item at [position] for the purposes
+         * Return the item type of the item at [position] for the purposes
          * of view recycling.
          *
          * The default implementation of this method returns 0, making the assumption of
-         * a single view type for the adapter. Unlike ListView adapters, types need not
-         * be contiguous. Consider using id resources to uniquely identify item view types.
+         * a single item type for the adapter. Unlike ListView adapters, types need not
+         * be contiguous. Consider using id resources to uniquely identify item item types.
          *
          * @param position position to query
          * @return integer value identifying the type of the view needed to represent the item at [position].
          * Type codes need not be contiguous.
          */
-        open fun type(position: Int): Int {
+        fun itemType(position: Int): Int {
             return 0
         }
 
@@ -266,17 +266,17 @@ open class ItemAdapter<V, M>(
          * layout file.
          *
          * The new Binding will be used to display items of the adapter using
-         * [bind]. Since it will be re-used to display
+         * [bindItem]. Since it will be re-used to display
          * different items in the data set, it is a good idea to cache references to sub views of
          * the View to avoid unnecessary [View.findViewById] calls.
          * @param parent The ViewGroup into which the new View will be added after it is bound to an adapter position.
          * @param inflater The [LayoutInflater]
-         * @param viewType The view type of the new View.
+         * @param itemType The item type of the new View.
          * @return binding
          * @see Binding
          */
-        abstract fun create(
-            parent: ViewGroup, inflater: LayoutInflater, viewType: Int
+        fun createItem(
+            parent: ViewGroup, inflater: LayoutInflater, itemType: Int
         ): Binding<V>
 
         /**
@@ -284,18 +284,18 @@ open class ItemAdapter<V, M>(
          * update the contents of the [Binding.itemView] to reflect the item at the given
          * position.
          *
-         * *Note* you can call your own custom bind(M, V, Int) method by following the example below:
+         * *Note* you can call your own custom bindItem(M, V, Int) method by following the example below:
 
         ```kotlin
-        fun bind(view: ViewObject1, item: M, position: Int) {
+        fun bindItem(view: ViewObject1, item: M, position: Int) {
         //
         }
 
-        fun bind(view: ViewObject2, item: M, position: Int) {
+        fun bindItem(view: ViewObject2, item: M, position: Int) {
         //
         }
 
-        fun bind(view: ViewObject..., item: M, position: Int) {
+        fun bindItem(view: ViewObject..., item: M, position: Int) {
         //
         }
         ```
@@ -303,11 +303,11 @@ open class ItemAdapter<V, M>(
          *          item at the given position in the data set.
          * @param item The Item selected within the position.
          * @param position The position of the item within the adapter's data set.
-         * @param viewType [type]
+         * @param itemType [itemType]
          * @return true if you use it but if you return false,[ViewHolder.bind] will try to call your custom
-         * bind method.
+         * bindItem method.
          */
-        open fun bind(view: V, item: M, position: Int, viewType: Int): Boolean {
+        fun bindItem(view: V, item: M, position: Int, itemType: Int): Boolean {
             return false
         }
     }
@@ -330,6 +330,7 @@ open class ItemAdapter<V, M>(
         recyclerView: RecyclerView,
         dragListener: LongPressDragListener
     ) {
+        if (longPressDragEnabled != null) return
         longPressDragEnabled = true
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
 
@@ -376,9 +377,9 @@ open class ItemAdapter<V, M>(
             ) {
                 super.clearView(recyclerView, viewHolder)
                 if (startPosition != endPosition) {
-                    dragListener.moved(startPosition, endPosition)
+                    dragListener.itemMoved(startPosition, endPosition)
                 } else if (startPosition == -1){
-                    dragListener.cancelled()
+                    dragListener.dragCancelled()
                 }
                 endPosition = -1
                 startPosition = -1
@@ -400,12 +401,12 @@ open class ItemAdapter<V, M>(
          * @param startPosition past position
          * @param endPosition new position
          */
-        fun moved(startPosition: Int, endPosition: Int)
+        fun itemMoved(startPosition: Int, endPosition: Int)
 
         /**
          * Called when no movement has occurred.
          */
-        fun cancelled()
+        fun dragCancelled()
 
     }
 }
