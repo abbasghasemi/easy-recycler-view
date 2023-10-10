@@ -61,6 +61,8 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel> {
 
     insertItem(item)
 
+    updateItem(position,item)
+
     removeItem(position)
 
     moveItem(fromPosition,toPosition)

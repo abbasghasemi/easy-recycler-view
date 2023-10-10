@@ -147,6 +147,19 @@ open class ItemAdapter<V, M>(
         notifyItemChanged(toPosition)
     }
 
+    /**
+     * Update [item] by [position]
+     */
+    open fun updateItem(position: Int, item: M) {
+        if (items.size <= position){
+            throw RuntimeException("items length is ${items.size} but position is ${position}.")
+        }
+        items.apply {
+            removeAt(position)
+            add(position, item)
+        }
+        notifyItemChanged(position)
+    }
 
     /**
      * Search to remove items that are not in the new items.
