@@ -5,7 +5,7 @@ There is a [sample](https://github.com/abbasghasemi/easy-recyclerview-adapter/tr
 ## Single view type
 ```kotlin
 ItemAdapter(items, object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel> {
-    override fun createItem(parent: ViewGroup, inflater: LayoutInflater, itemType: Int): ItemAdapter.Binding<ItemRecycler1Binding> {
+    override fun createItem(inflater: LayoutInflater, parent: ViewGroup, itemType: Int): ItemAdapter.Binding<ItemRecycler1Binding> {
         val item = ItemRecycler1Binding.inflate(inflater, parent, false)
         return ItemAdapter.Binding(item.root, item)
     }
@@ -23,7 +23,7 @@ ItemAdapter(items, object : ItemAdapter.ViewBinding<Any, DataModel> {
         return position
     }
 
-    override fun createItem(parent: ViewGroup, inflater: LayoutInflater, itemType: Int): ItemAdapter.Binding<Any> {
+    override fun createItem(inflater: LayoutInflater, parent: ViewGroup, itemType: Int): ItemAdapter.Binding<Any> {
         return if (itemType == 0) {
             val item = ItemRecycler1Binding.inflate(inflater, parent, false)
             ItemAdapter.Binding(item.root, item)

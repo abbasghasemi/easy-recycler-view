@@ -34,8 +34,8 @@ class MainActivity : AppCompatActivity() {
             object : ItemAdapter.ViewBinding<ItemRecycler1Binding, DataModel> {
 
                 override fun createItem(
-                    parent: ViewGroup,
                     inflater: LayoutInflater,
+                    parent: ViewGroup,
                     itemType: Int
                 ): ItemAdapter.Binding<ItemRecycler1Binding> {
                     val item = ItemRecycler1Binding.inflate(inflater, parent, false)
@@ -63,8 +63,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun createItem(
-                parent: ViewGroup,
                 inflater: LayoutInflater,
+                parent: ViewGroup,
                 itemType: Int
             ): ItemAdapter.Binding<Any> {
                 return if (itemType == 0) {

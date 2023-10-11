@@ -86,10 +86,14 @@ open class ItemAdapter<V, M>(
      * Also, if the position of the items is changed, it will move to the new position.
      */
     open fun animateTo(newItems: List<M>) {
+        animateTo(newItems, null)
+    }
+
+    open fun animateTo(newItems: List<M>, equals: ItemEquals<M>?) {
         try {
-            applyAndAnimateRemovals(newItems)
-            applyAndAnimateAdditions(newItems)
-            applyAndAnimateMovedItems(newItems)
+            applyAndAnimateRemovals(newItems, equals)
+            applyAndAnimateAdditions(newItems, equals)
+            applyAndAnimateMovedItems(newItems, equals)
         } catch (e: Exception) {
             //
         }
@@ -151,7 +155,7 @@ open class ItemAdapter<V, M>(
      * Update [item] by [position]
      */
     open fun updateItem(position: Int, item: M) {
-        if (items.size <= position){
+        if (items.size <= position) {
             throw RuntimeException("items length is ${items.size} but position is ${position}.")
         }
         items.apply {
@@ -164,11 +168,20 @@ open class ItemAdapter<V, M>(
     /**
      * Search to remove items that are not in the new items.
      */
-    private fun applyAndAnimateRemovals(newItems: List<M>) {
+    private fun applyAndAnimateRemovals(newItems: List<M>, equals: ItemEquals<M>?) {
         for (i in items.size - 1 downTo 0) {
             val model = items[i]
-            if (!newItems.contains(model)) {
+            if (equals == null && !newItems.contains(model)) {
                 removeItem(i)
+            } else if (equals != null) {
+                var remove = true
+                for (index in newItems.indices) {
+                    if (equals.equals(model, newItems[index])) {
+                        remove = false
+                        break
+                    }
+                }
+                if (remove) removeItem(i)
             }
         }
     }
@@ -176,13 +189,22 @@ open class ItemAdapter<V, M>(
     /**
      * Search to add items that are not in the current items.
      */
-    private fun applyAndAnimateAdditions(newModels: List<M>) {
+    private fun applyAndAnimateAdditions(newItems: List<M>, equals: ItemEquals<M>?) {
         var i = 0
-        val count = newModels.size
+        val count = newItems.size
         while (i < count) {
-            val model = newModels[i]
-            if (!items.contains(model)) {
+            val model = newItems[i]
+            if (equals == null && !items.contains(model)) {
                 insertItem(i, model)
+            } else if (equals != null) {
+                var insert = true
+                for (index in items.indices) {
+                    if (equals.equals(items[index], model)) {
+                        insert = false
+                        break
+                    }
+                }
+                if (insert) insertItem(i, model)
             }
             i++
         }
@@ -191,18 +213,46 @@ open class ItemAdapter<V, M>(
     /**
      * Search to change the position of items whose position has changed.
      */
-    private fun applyAndAnimateMovedItems(newModels: List<M>) {
+    private fun applyAndAnimateMovedItems(newModels: List<M>, equals: ItemEquals<M>?) {
         for (toPosition in newModels.size - 1 downTo 0) {
             val model = newModels[toPosition]
-            val fromPosition: Int = items.indexOf(model)
+            var fromPosition = -1
+            if (equals == null) {
+                fromPosition = items.indexOf(model)
+            } else {
+                for (index in items.indices) {
+                    if (equals.equals(items[index], model)) {
+                        fromPosition = index
+                        break
+                    }
+                }
+            }
             if (fromPosition >= 0 && fromPosition != toPosition) {
                 moveItem(fromPosition, toPosition)
             }
         }
     }
 
+    /**
+     * Checks the sameness of two items.
+     */
+    interface ItemEquals<M> {
+        /**
+         * @param [currentItem]
+         * @param [newItem]
+         * @return true if two items are the same.
+         */
+        fun equals(currentItem: M, newItem: M): Boolean
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(viewBinding.createItem(parent, LayoutInflater.from(parent.context), viewType))
+        return ViewHolder(
+            viewBinding.createItem(
+                LayoutInflater.from(parent.context),
+                parent,
+                viewType
+            )
+        )
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
@@ -282,14 +332,14 @@ open class ItemAdapter<V, M>(
          * [bindItem]. Since it will be re-used to display
          * different items in the data set, it is a good idea to cache references to sub views of
          * the View to avoid unnecessary [View.findViewById] calls.
-         * @param parent The ViewGroup into which the new View will be added after it is bound to an adapter position.
          * @param inflater The [LayoutInflater]
+         * @param parent The ViewGroup into which the new View will be added after it is bound to an adapter position.
          * @param itemType The item type of the new View.
          * @return binding
          * @see Binding
          */
         fun createItem(
-            parent: ViewGroup, inflater: LayoutInflater, itemType: Int
+            inflater: LayoutInflater, parent: ViewGroup, itemType: Int
         ): Binding<V>
 
         /**
@@ -391,7 +441,7 @@ open class ItemAdapter<V, M>(
                 super.clearView(recyclerView, viewHolder)
                 if (startPosition != endPosition) {
                     dragListener.itemMoved(startPosition, endPosition)
-                } else if (startPosition == -1){
+                } else if (startPosition == -1) {
                     dragListener.dragCancelled()
                 }
                 endPosition = -1
