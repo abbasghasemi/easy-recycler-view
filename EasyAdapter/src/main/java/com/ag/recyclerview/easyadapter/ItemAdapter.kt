@@ -378,10 +378,7 @@ open class ItemAdapter<V, M>(
     /**
      * Specifies whether long press drag is active or inactive.
      */
-    open var longPressDragEnabled: Boolean? = null
-        set(value) {
-            field = value!!
-        }
+    open var longPressDragEnabled: Boolean = true
 
     /**
      * The user can move items from one position to another by long touching them.
@@ -393,8 +390,6 @@ open class ItemAdapter<V, M>(
         recyclerView: RecyclerView,
         dragListener: LongPressDragListener
     ) {
-        if (longPressDragEnabled != null) return
-        longPressDragEnabled = true
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
 
             private var startPosition = -1
@@ -407,7 +402,7 @@ open class ItemAdapter<V, M>(
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
 
             override fun isLongPressDragEnabled(): Boolean {
-                return this@ItemAdapter.longPressDragEnabled!!
+                return this@ItemAdapter.longPressDragEnabled
             }
 
             override fun getMovementFlags(
