@@ -1,5 +1,17 @@
+[![](https://jitpack.io/v/abbasghasemi/easy-recyclerview-adapter.svg)](https://jitpack.io/#abbasghasemi/easy-recyclerview-adapter)
+
 # Implement RecyclerView Adapter with minimum complexity
 *Reduce Adapter creation speed to two methods.*
+
+## Getting Started
+To start working with dropdown, you need to add its dependency into your `build.gradle` file:
+### Dependency
+```groovy
+dependencies {
+    implementation "com.github.abbasghasemi:easy-recyclerview-adapter:[latest_version]"
+}
+```
+
 ### Sample
 There is a [sample](https://github.com/abbasghasemi/easy-recyclerview-adapter/tree/master/sample) module.
 ## Single view type
